@@ -3,6 +3,8 @@ import sqlite3
 import time
 import threading
 from telebot import types
+import requests
+
 
 # Замените 'YOUR_BOT_TOKEN' на токен вашего бота
 bot = telebot.TeleBot('6509542841:AAF307o-FhkzH8umFpZV0p2T6NgW2NpyWz8')
@@ -185,10 +187,26 @@ def send_reminders():
 
         time.sleep(60)   # Проверяем каждую минуту
 
-if __name__ == "__main__":
-    # Запускаем функцию для отправки напоминаний в отдельном потоке
-    t = threading.Thread(target=send_reminders)
-    t.start()
 
-    # Запустим бота
-    bot.polling()
+def check_bot_availability():
+    bot_url = f"https://api.telegram.org/bot{6509542841:AAF307o-FhkzH8umFpZV0p2T6NgW2NpyWz8}/getMe"  # Замените YOUR_BOT_TOKEN на реальный токен вашего бота
+    try:
+        response = requests.get(bot_url)
+        if response.status_code == 200:
+            print("Бот активен.")
+        else:
+            print("Бот не активен. Отключение бота.")
+            # Здесь можно выполнить действия по отключению бота, например, завершить его выполнение.
+    except Exception as e:
+        print(f"Ошибка при проверке бота: {str(e)}")
+
+
+if __name__ == "__main__":
+    while True:
+        try:
+            # Запустим бота
+            bot.polling()
+        except Exception as e:
+            print(f"Произошла ошибка: {str(e)}")
+            print("Перезапуск бота через 10 секунд...")
+            time.sleep(10) 
