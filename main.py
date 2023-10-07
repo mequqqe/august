@@ -17,9 +17,6 @@ bot = telebot.TeleBot(TOKEN)
 def send_ping():
     while True:
         try:
-            # Отправляем "пинг" в чат
-            bot.send_message(CHAT_ID, "Бот работает.")
-
             # Пауза в 30 минут перед отправкой следующего "пинга"
             time.sleep(1800)
         except Exception as e:
