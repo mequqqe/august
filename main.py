@@ -1,3 +1,4 @@
+import random
 import telebot
 import sqlite3
 import time
@@ -6,12 +7,16 @@ from telebot import types
 import requests
 import re
 
+
+
 # Замените 'YOUR_BOT_TOKEN' на токен вашего бота
 TOKEN = ('6509542841:AAF307o-FhkzH8umFpZV0p2T6NgW2NpyWz8')
+
 
 CHAT_ID = -1001718975100
 
 bot = telebot.TeleBot(TOKEN)
+
 
 # Функция для отправки "пинга" каждые 30 минут
 def send_ping():
@@ -70,21 +75,6 @@ def send_anonymous(message):
     else:
         bot.send_message(message.chat.id, "Команда /send_anonymous работает только в личных сообщениях с ботом.")
 
-# Обработчик команды /mention_all в беседах.
-@bot.message_handler(commands=['mention_all'], func=lambda message: message.chat.type == 'supergroup')
-def mention_all(message):
-    chat_id = message.chat.id
-
-    # Получаем количество участников в беседе.
-    members_count = bot.get_chat_members_count(chat_id)
-
-    # Формируем строку с упоминаниями всех участников.
-    mentions = ""
-    for i in range(1, members_count + 1):
-        mentions += f"@user{i} "
-
-    # Отправляем упоминания всех участников в беседе.
-    bot.send_message(chat_id, mentions + "вас вызывают!")
 
 # Запуск бота
 if __name__ == '__main__':
