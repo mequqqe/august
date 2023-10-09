@@ -184,13 +184,14 @@ def get_top_users(limit=10):
     conn = sqlite3.connect('user_scores.db')
     cursor = conn.cursor()
 
-    # Получите топ-пользователей с наибольшими баллами и именами
+    # Извлекаем данные о пользователях и их баллах, сортируем по убыванию баллов
     cursor.execute('SELECT user_id, username, score FROM user_scores ORDER BY score DESC LIMIT ?', (limit,))
     top_users = cursor.fetchall()
 
     conn.close()
 
     return top_users
+
 
 
 # Обработчик команды /top
