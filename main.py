@@ -127,7 +127,7 @@ def handle_message(message):
     global message_counter, correct_answer
 
     # Если пользователь отправил ответ на арифметическую задачу
-    if message_counter % 80 != 0 and message.text.isdigit():
+    if message_counter % 20 != 0 and message.text.isdigit():
         user_answer = int(message.text)
 
         # Проверяем, не отвечал ли пользователь уже ранее
@@ -152,7 +152,7 @@ def handle_message(message):
     message_counter += 1
 
     # Если достигнуто 20 сообщений, отправляем новую математическую задачу
-    if message_counter % 5 == 0:
+    if message_counter % 80 == 0:
         problem, correct_answer = generate_math_problem()
         bot.send_message(message.chat.id, problem)
 
