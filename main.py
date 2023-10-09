@@ -19,6 +19,9 @@ bot = telebot.TeleBot(TOKEN)
 
 message_counter = 0
 correct_answer = None  
+# Создайте словарь для отслеживания пользователей, которые уже дали правильные ответы
+answered_correctly = {}
+
 
 
 # Создаем подключение к базе данных или создаем файл базы данных, если он не существует
@@ -26,6 +29,7 @@ conn = sqlite3.connect('user_scores.db')
 cursor = conn.cursor()
 
 # Создаем таблицу для хранения информации о пользователях и их успехах
+# Измените создание таблицы для хранения информации о пользователях и их успехах
 cursor.execute('''
 CREATE TABLE IF NOT EXISTS user_scores (
     user_id INTEGER PRIMARY KEY,
@@ -33,6 +37,7 @@ CREATE TABLE IF NOT EXISTS user_scores (
     score INTEGER DEFAULT 0
 )
 ''')
+
 
 # Сохраняем изменения в базе данных и закрываем соединение
 conn.commit()
@@ -104,15 +109,12 @@ def generate_math_problem():
     num2 = random.randint(1, 100)
 
     # Выбираем случайную математическую операцию (сложение, вычитание, умножение)
-    operation = random.choice(['+', '-', '*'])
+    operation = random.choice(['+', '*'])
 
     # Генерируем текст задачи
     if operation == '+':
         problem_text = f"{num1} + {num2} = ?"
         answer = num1 + num2
-    elif operation == '-':
-        problem_text = f"{num1} - {num2} = ?"
-        answer = num1 - num2
     elif operation == '*':
         problem_text = f"{num1} * {num2} = ?"
         answer = num1 * num2
@@ -124,17 +126,14 @@ def generate_math_problem():
 def handle_message(message):
     global message_counter, correct_answer
 
-    # Увеличиваем счетчик сообщений после каждого сообщения
-    message_counter += 1
-
-    # Если достигнуто 20 сообщений, отправляем новую математическую задачу
-    if message_counter % 20 == 0:
-        problem, correct_answer = generate_math_problem()
-        bot.send_message(message.chat.id, problem)
-
     # Если пользователь отправил ответ на арифметическую задачу
-    if message_counter % 20 != 0 and message.text.isdigit():
+    if message_counter % 80 != 0 and message.text.isdigit():
         user_answer = int(message.text)
+
+        # Проверяем, не отвечал ли пользователь уже ранее
+        if message.from_user.id in answered_correctly:
+            bot.send_message(message.chat.id, "Вы уже давали правильный ответ ранее.")
+            return
 
         # Проверяем правильность ответа пользователя
         if user_answer == correct_answer:
@@ -143,8 +142,22 @@ def handle_message(message):
             # Обновляем счет пользователя в базе данных
             update_user_score(message.from_user.id, 5)
 
+            # Добавляем пользователя в словарь answered_correctly
+            answered_correctly[message.from_user.id] = True
+
         else:
             bot.send_message(message.chat.id, "Неправильно. Попробуйте еще раз.")
+    
+    # Увеличиваем счетчик сообщений после каждого сообщения
+    message_counter += 1
+
+    # Если достигнуто 20 сообщений, отправляем новую математическую задачу
+    if message_counter % 5 == 0:
+        problem, correct_answer = generate_math_problem()
+        bot.send_message(message.chat.id, problem)
+
+
+
 
 # Функция для обновления счета пользователя в базе данных
 def update_user_score(user_id, points):
@@ -166,6 +179,35 @@ def update_user_score(user_id, points):
 
     conn.commit()
     conn.close()
+
+def get_top_users(limit=10):
+    conn = sqlite3.connect('user_scores.db')
+    cursor = conn.cursor()
+
+    # Получите топ-пользователей с наибольшими баллами и именами
+    cursor.execute('SELECT user_id, username, score FROM user_scores ORDER BY score DESC LIMIT ?', (limit,))
+    top_users = cursor.fetchall()
+
+    conn.close()
+
+    return top_users
+
+
+# Обработчик команды /top
+@bot.message_handler(commands=['top'])
+def top(message):
+    # Получите топ-пользователей (по умолчанию 10)
+    top_users = get_top_users()
+
+    if top_users:
+        top_message = "Топ пользователей, решавших математические задачи:\n"
+        for i, (user_id, username, score) in enumerate(top_users, start=1):
+            top_message += f"{i}. {username} - {score} баллов\n"
+
+        bot.send_message(message.chat.id, top_message)
+    else:
+        bot.send_message(message.chat.id, "Пока нет пользователей в топе.")
+
 
 
 
